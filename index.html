@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ML Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card: #13131a;
+      --border: #2a2a3a;
+      --accent: #00e5a0;
+      --accent2: #006aff;
+      --text: #f0f0f5;
+      --muted: #6b6b80;
+      --input-bg: #1c1c28;
+      --error: #ff4d6d;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 2.5rem;
+      animation: slideDown 0.6s ease both;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,229,160,0.1);
+      border: 1px solid rgba(0,229,160,0.3);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    h1 span {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      margin-top: 0.6rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.6;
+    }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      animation: fadeUp 0.7s ease both;
+      animation-delay: 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 200px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    /* Form grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.15s; }
+    .form-group:nth-child(2) { animation-delay: 0.2s; }
+    .form-group:nth-child(3) { animation-delay: 0.25s; }
+    .form-group:nth-child(4) { animation-delay: 0.3s; }
+    .form-group:nth-child(5) { animation-delay: 0.35s; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    input[type="number"] {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.95rem;
+      padding: 0.7rem 1rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,229,160,0.1);
+    }
+
+    input[type="number"]::placeholder { color: var(--muted); }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.5rem 0;
+    }
+
+    /* Submit button */
+    .btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, var(--accent), #00c87a);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0,229,160,0.25);
+    }
+
+    .btn:active { transform: translateY(0); }
+
+    .btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .btn.loading::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+      animation: shimmer 1.2s infinite;
+    }
+
+    /* Result box */
+    .result {
+      margin-top: 1.2rem;
+      padding: 1.2rem 1.5rem;
+      border-radius: 12px;
+      display: none;
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .result.success {
+      display: block;
+      background: rgba(0,229,160,0.08);
+      border: 1px solid rgba(0,229,160,0.3);
+    }
+
+    .result.error {
+      display: block;
+      background: rgba(255,77,109,0.08);
+      border: 1px solid rgba(255,77,109,0.3);
+    }
+
+    .result-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .result-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .result.error .result-value {
+      font-size: 0.9rem;
+      color: var(--error);
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      animation: fadeUp 0.8s ease both;
+      animation-delay: 0.4s;
+    }
+
+    .footer a { color: var(--accent); text-decoration: none; }
+
+    /* Animations */
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    @keyframes shimmer {
+      from { transform: translateX(-100%); }
+      to   { transform: translateX(100%); }
+    }
+
+    @media (max-width: 480px) {
+      .form-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div class="badge">ML Regression Model</div>
+      <h1>Predict <span>Your Score</span></h1>
+      <p class="subtitle">Enter your academic & skill details below (all values out of 10) to get an instant prediction.</p>
+    </div>
+
+    <div class="card">
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="f1">IQ Score</label>
+          <input type="number" id="f1" placeholder="e.g. 8.5" step="0.1" min="0" max="10"/>
+        </div>
+
+        <div class="form-group">
+          <label for="f2">CGPA</label>
+          <input type="number" id="f2" placeholder="e.g. 7.8" step="0.1" min="0" max="10"/>
+        </div>
+
+        <div class="form-group">
+          <label for="f3">10th Marks</label>
+          <input type="number" id="f3" placeholder="e.g. 9.0" step="0.1" min="0" max="10"/>
+        </div>
+
+        <div class="form-group">
+          <label for="f4">12th Marks</label>
+          <input type="number" id="f4" placeholder="e.g. 8.2" step="0.1" min="0" max="10"/>
+        </div>
+
+        <div class="form-group full">
+          <label for="f5">Communication Skills</label>
+          <input type="number" id="f5" placeholder="e.g. 7.5" step="0.1" min="0" max="10"/>
+        </div>
+
+      </div>
+
+      <div class="divider"></div>
+
+      <button class="btn" id="predictBtn" onclick="predict()">
+        Run Prediction →
+      </button>
+
+      <div class="result" id="result">
+        <div class="result-label">Predicted Value</div>
+        <div class="result-value" id="resultValue">—</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Powered by <a href="#">FastAPI</a> + Scikit-learn &nbsp;·&nbsp; 
+      <a href="https://github.com/YOUR_USERNAME/YOUR_REPO" target="_blank">GitHub ↗</a>
+    </div>
+
+  </div>
+
+  <script>
+    // ⚙️ CHANGE THIS to your deployed FastAPI backend URL
+    const API_URL = "https://YOUR_HF_SPACE.hf.space/predict";
+
+    async function predict() {
+      const ids = ["f1", "f2", "f3", "f4", "f5"];
+      const features = ids.map(id => parseFloat(document.getElementById(id).value));
+
+      const btn = document.getElementById("predictBtn");
+      const resultBox = document.getElementById("result");
+      const resultValue = document.getElementById("resultValue");
+
+      // Validate all fields are filled and within 0–10
+      const invalid = features.some(v => isNaN(v) || v < 0 || v > 10);
+      if (invalid) {
+        resultValue.textContent = "All values must be between 0 and 10.";
+        resultBox.className = "result error";
+        return;
+      }
+      btn.textContent = "Predicting...";
+      btn.classList.add("loading");
+      btn.textContent = "Predicting...";
+      resultBox.className = "result";
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ features })
+        });
+
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
+        const data = await response.json();
+
+        resultValue.textContent = data.prediction.toFixed(4);
+        resultBox.classList.add("success");
+
+      } catch (err) {
+        resultValue.textContent = err.message || "Connection failed. Is the backend running?";
+        resultBox.classList.add("error");
+      } finally {
+        btn.classList.remove("loading");
+        btn.textContent = "Run Prediction →";
+      }
+    }
+
+    // Allow Enter key to trigger prediction
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") predict();
+    });
+  </script>
+</body>
+</html>
